@@ -111,7 +111,7 @@ inputDataBits = split(inputData, ",")
 map!(strip,inputDataBits)
 
 part1Location = travel(inputDataBits, false)
-println("In part 1, you end up at ", part1Location, " travelling ", abs(part1Location[1]) + abs(part1Location[2]), " blocks.")
+println("In part 1, you end up at ", part1Location, " which is at a distance of ", abs(part1Location[1]) + abs(part1Location[2]), " blocks.")
 
 part2Location = travel(inputDataBits, true)
-println("In part 2, you end up at ", part2Location, " travelling ", abs(part2Location[1]) + abs(part2Location[2]), " blocks.")
+println("In part 2, you end up at ", part2Location, " which is at a distance of ", abs(part2Location[1]) + abs(part2Location[2]), " blocks.")
