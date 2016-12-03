@@ -12,9 +12,9 @@ KEYPAD_PART1 = [['0','0','0','0','0'],['0', '1', '2', '3', '0'],['0','4','5','6'
 KEYPAD_PART2 = [['0','0','0','0','0','0','0'],['0', '0', '0', '1', '0', '0', '0'],['0','0','2','3','4','0','0'],['0','5','6','7','8','9','0'],['0','0','A','B','C','0','0'],['0','0','0','D','0','0','0'],['0','0','0','0','0','0','0']]
 
 function getNumbers(inputDataBits, keypad)
-  # do nothing yet
+
   numbers = Vector{Char}()
-  currentLocation = [3,3] # start at number 5
+  currentLocation = [3,3] # start at centre
 
   for controlString in inputDataBits
     if DEBUG println("controlString: $controlString") end
