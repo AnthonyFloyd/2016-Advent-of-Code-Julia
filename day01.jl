@@ -89,7 +89,7 @@ end
 
 # Data file
 # Input data has been saved to this file
-inputDataFileName = "day1-input.txt"
+inputDataFileName = "day01-input.txt"
 
 # Read the input data, parse it down to a list of "commands"
 inputDataFile = open(inputDataFileName, "r")
