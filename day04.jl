@@ -84,7 +84,30 @@ function parseRooms(inputDataLines)
       # and then add it to the total
 
       if generatedChecksum == checksum
-        total += parse(sectorID)
+        shift = parse(sectorID)
+
+        total += shift
+
+        # part 2 is to decrypt the room name with a shift cypher
+        roomName = ""
+
+        for letter in line
+          if isnumber(letter)
+            break
+          end
+
+          if letter == '-'
+            newLetter = ' '
+          else
+            # all letters are lowercase, thank goodness
+            newLetter = Char(rem((Int(letter) - 97 + shift), 26) + 97)
+          end
+
+          roomName *= string(newLetter)
+        end
+
+        println("Room: $roomName ($sectorID)")
+
       end
     end
   end
