@@ -3,6 +3,22 @@
 # Day 5: How About a Nice Game of Chess?
 #
 
+# Part 1 completes in: 12.37s
+# Part 2 completes in: 31.63s
+#
+# In Python 2.7.10 (32-bit)
+# Part 1 takes ~23.54s
+# Part 2 takes ~63.59s
+#
+# In Python 2.7.12 (64-bit)
+# Part 1 takes ~20.71s
+# Part 2 takes ~57.06s
+#
+# In Python 3.5.2 (64-bit)
+# Part 1 takes ~28.07s
+# Part 2 takes ~75.11s
+#
+
 using Nettle
 
 println("Advent of Code")
@@ -18,6 +34,8 @@ counter = 0
 foundCounter = 0
 password = ""
 
+tic()
+
 while foundCounter < 8
   testHash = hexdigest("md5",DOOR_ID * string(counter))
   if testHash[1:5] == "00000"
@@ -29,7 +47,9 @@ while foundCounter < 8
   counter += 1
 end
 
-println("The part 1 password for $DOOR_ID is $password.")
+toc()
+
+println("The part 1 password for $DOOR_ID is $password ($counter iterations).")
 
 # part 2
 println("\nPart2")
@@ -38,6 +58,8 @@ notFound = true
 counter = 0
 foundCounter = 0
 password = "--------"
+
+tic()
 
 while foundCounter < 8
   testHash = hexdigest("md5",DOOR_ID * string(counter))
@@ -55,5 +77,6 @@ while foundCounter < 8
   end
   counter += 1
 end
+toc()
 
-println("The part 2 password for $DOOR_ID is $password.")
+println("The part 2 password for $DOOR_ID is $password ($counter iterations).")
