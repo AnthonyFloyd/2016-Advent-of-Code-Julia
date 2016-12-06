@@ -18,7 +18,15 @@
 # Part 1 takes ~28.07s
 # Part 2 takes ~75.11s
 #
-
+# Using DV's C++ implementation,
+# Part 1 takes 66.097s / 38.344s with /Ox
+# Part 2 takes 187.31s / 106.322s with /Ox
+#
+# Using MZ's Python implementation (2.7.10, 32-bit)
+# Part 1 takes ~27.52s
+# Part 2 takes ~76.02s
+#
+#
 using Nettle
 
 println("Advent of Code")
