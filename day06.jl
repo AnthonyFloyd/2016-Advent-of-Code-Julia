@@ -26,6 +26,8 @@ for counter in 1:NCOLS
   signalDict[counter] = Dict{Char,Int}()
 end
 
+tic()
+
 # For every line, loop through each character,
 # and count the occurances
 for line in inputDataLines
@@ -66,6 +68,7 @@ for subDict in signalDict
   signal1 = signal1 * string(maxChar)
   signal2 = signal2 * string(minChar)
 end
+toc()
 
 println("The part 1 signal is: $signal1")
 println("The part 2 signal is: $signal2")
