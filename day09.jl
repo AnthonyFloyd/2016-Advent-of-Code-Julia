@@ -1,10 +1,10 @@
 #
 # Advent of Code
-# Day 9:
+# Day 9: Explosives in Cyberspace
 #
 
 println("Advent of Code")
-println("Day 9: ")
+println("Day 9: Explosives in Cyberspace")
 println("")
 
 # Data file
