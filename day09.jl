@@ -42,45 +42,21 @@ function calculateExpandedLength(sourceData::SubString{String}, expandInternal::
   while charCounter <= length(sourceData)
     # if we discover a marker, process it
     # could use regex for this, I guess
+
+    # or no regex
     if sourceData[charCounter] == '('
-      # find how many characters to repeat,
-      # process digits up to finding the 'x'
-      foundX = false
       charCounter += 1
-      nCharactersString = string(sourceData[charCounter])
-
-      while !foundX
-        charCounter += 1
-        if sourceData[charCounter] == 'x'
-          foundX = true
-        else
-          nCharactersString = nCharactersString * string(sourceData[charCounter])
-        end
-      end
-
-      # convert the digits into an int
-      nCharacters = parse(nCharactersString)
-
-      # now find how many repeats by processing digits again
-      foundClose = false
-      charCounter += 1
-      nRepeatsString = string(sourceData[charCounter])
-
-      while !foundClose
-        charCounter += 1
-        if sourceData[charCounter] == ')'
-          foundClose = true
-        else
-          nRepeatsString = nRepeatsString * string(sourceData[charCounter])
-        end
-      end
-
-      # convert the digits to an int
-      nRepeats = parse(nRepeatsString)
+      # the regex way:
+      m = match(r"^(\d+)x(\d+)",sourceData[charCounter:end])
+      lengthMatchString = length(m.match)
+      nCharacters = parse(m.captures[1])
+      nRepeats = parse(m.captures[2])
+      charCounter += lengthMatchString
 
       if expandInternal
         # find the repeat string
         charCounter += 1 # first char outside bracket
+
         repeatString = sourceData[charCounter:charCounter + nCharacters - 1]
         # call this function again, using the repeat string as the base substring
         lengthOfRepeatString = calculateExpandedLength(repeatString, true)
