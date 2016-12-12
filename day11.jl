@@ -7,6 +7,8 @@ println("Advent of Code")
 println("Day 11: Radioisotope Thermoelectric Generators")
 println("")
 
+DEBUG = false
+
 BIG = typemax(Int64)
 
 # Test inputs
@@ -29,7 +31,9 @@ floors[2] = [GH]
 floors[3] = [GLi,]
 floors[4] = []
 
-elevator = Vector{Int}(2)
+elevator = [0,0]
+
+ALLCHIPS = IntSet([MH, MLi])
 
 # Part 1 inputs
 # The first floor contains a promethium generator and a promethium-compatible microchip.
@@ -56,7 +60,7 @@ elevator = Vector{Int}(2)
 # floors[3] = [MCo, MCu, MRu, MPl]
 # floors[4] = []
 #
-# elevator = Vector{Int}(2)
+# elevator = [0,0]
 
 elevatorFloor = 1
 elevatorTrips = 0
@@ -72,32 +76,59 @@ elevatorTrips = 0
 # Brute force this.
 # Somehow.
 
-function changeConfiguration(unloadCounter1, unloadCounter2, loadCounter1, loadCounter2, startingFloors, startingElevator, elevatorFloor, newFloors, newElevator)
+function changeConfiguration(unloadCounter1, unloadCounter2, loadCounter1, loadCounter2, startingFloors, startingElevator, elevatorFloor)
 
   newFloors = deepcopy(startingFloors)
   newElevator = deepcopy(startingElevator)
   startingElevatorLoad = length(startingElevator)
   startingFloorLoad = length(startingFloors[elevatorFloor])
 
+
+  # println("Changing configuration")
+  # println("Unload: $unloadCounter1, $unloadCounter2")
+  # println("Load: $loadCounter1, $loadCounter2")
+  # println("Floor: $elevatorFloor")
+  # println("Starting Floor: ", startingFloors[elevatorFloor])
+  # println("Starting Elevator: ", startingElevator)
+  # println("")
+
   abort = false
 
-  # unload 1
-  if unloadCounter1 > 0
-    if newElevator[unloadCounter1] != 0
-      push!(newFloors[elevatorFloor], newElevator[unloadCounter1])
-      newElevator[unloadCounter1] = 0
-    else
-      abort = true
-    end
+  # wait a minute, we can't remove the same thing from the elevator
+  # or load the same thing on to the elevator
+  #
+  # But doing nothing is an option.
+  #
+
+  if (unloadCounter1 == unloadCounter2) && unloadCounter1 != 0
+    if DEBUG println("Abort: unloading the same thing twice ($unloadCounter1, $unloadCounter2)") end
+    abort = true
+  elseif (loadCounter1 == loadCounter2) && loadCounter1 != 0
+    if DEBUG println("Abort: loading same thing twice ($loadCounter1, $loadCounter2)") end
+    abort = true
   end
 
-  # unload 2
-  if unloadCounter2 > 0 && !abort
-    if newElevator[unloadCounter2] != 0
-      push!(newFloors[elevatorFloor], newElevator[unloadCounter2])
-      newElevator[unloadCounter2] = 0
-    else
-      abort = true
+  if !abort
+    # unload 1
+    if unloadCounter1 > 0
+      if newElevator[unloadCounter1] != 0
+        push!(newFloors[elevatorFloor], newElevator[unloadCounter1])
+        newElevator[unloadCounter1] = 0
+      else
+        if DEBUG println("Abort: Nothing to unload (1)") end
+        abort = true
+      end
+    end
+
+    # unload 2
+    if unloadCounter2 > 0 && !abort
+      if newElevator[unloadCounter2] != 0
+        push!(newFloors[elevatorFloor], newElevator[unloadCounter2])
+        newElevator[unloadCounter2] = 0
+      else
+        if DEBUG println("Abort: Nothing to unload (2)") end
+        abort = true
+      end
     end
   end
 
@@ -115,20 +146,33 @@ function changeConfiguration(unloadCounter1, unloadCounter2, loadCounter1, loadC
 
     # load 1
     if loadCounter1 != 0
-      if length(availableSpaces) > 0
-        newElevator[pop!(availableSpaces)] = startingFloors[elevatorFloor][loadCounter1]
-        deleteat!(newFloors[elevatorFloor], getindex(newFloors[elevatorFloor],startingFloors[elevatorFloor][loadCounter1]))
+      if length(availableSpaces) > 0 && length(newFloors[elevatorFloor]) > 0
+        elevatorSpot = pop!(availableSpaces)
+        thing = startingFloors[elevatorFloor][loadCounter1]
+        #println("Putting ", thing, " in the elevator spot $elevatorSpot")
+        newElevator[elevatorSpot] = thing
+        thingIndex = findin(newFloors[elevatorFloor], thing)[1]
+        #println("Trying to remove ", thing, " from ", newFloors[elevatorFloor], " at index ", thingIndex)
+        deleteat!(newFloors[elevatorFloor], thingIndex)
       else
+        if DEBUG println("Abort: No room to load elevator (1)") end
         abort = true
       end
     end
 
+    # load 2
     if !abort
       if loadCounter2 != 0
-        if length(availableSpaces) > 0
-          newElevator[pop!(availableSpaces)] = startingFloors[elevatorFloor][loadCounter2]
-          deleteat!(newFloors[elevatorFloor], getindex(newFloors[elevatorFloor],startingFloors[elevatorFloor][loadCounter2]))
+        if length(availableSpaces) > 0 && length(newFloors[elevatorFloor]) > 0
+          elevatorSpot = pop!(availableSpaces)
+          thing = startingFloors[elevatorFloor][loadCounter2]
+          #println("Putting ", thing, " in the elevator spot $elevatorSpot")
+          newElevator[elevatorSpot] = thing
+          thingIndex = findin(newFloors[elevatorFloor], thing)[1]
+          #println("Trying to remove ", thing, " from ", newFloors[elevatorFloor], " at index ", thingIndex)
+          deleteat!(newFloors[elevatorFloor], thingIndex)
         else
+          if DEBUG println("Abort: No room to load elevator (2)") end
           abort = true
         end
       end
@@ -138,13 +182,15 @@ function changeConfiguration(unloadCounter1, unloadCounter2, loadCounter1, loadC
       # ok, we've loaded and unloaded the elevator, let's check to see if we have a valid configuration
 
       # first, the elevator needs something to make it go
-      if length(newElevator) == 0
+      if newElevator[1] == 0 && newElevator[2] == 0
+        if DEBUG println("Abort: Nothing in the elevator") end
         abort = true
       end
 
       # things in the elevator must be compatible
-      if length(newElevator) == 2
+      if newElevator[1] != 0 && newElevator[2] != 0
         if newElevator[1] != -newElevator[2]
+          if DEBUG println("Abort: Incompatible items in elevator (", newElevator[1],",",newElevator[2],")") end
           abort = true
         end
       end
@@ -156,6 +202,7 @@ function changeConfiguration(unloadCounter1, unloadCounter2, loadCounter1, loadC
         if item1 > 0 # it's a chip find all generators
           for item2 in newFloors[elevatorFloor]
             if item2 < 0 && item1 != -item2
+              if DEBUG println("Abort: Incompatible items on floor (", item1,",",item2,")") end
               abort = true
               break
             end
@@ -170,14 +217,51 @@ function changeConfiguration(unloadCounter1, unloadCounter2, loadCounter1, loadC
 
   if abort
     isValidConfiguration = false
+  else
+    isValidConfiguration = true
+
+    # println("Valid change")
+    # println("Starting Floor: ", startingFloors[elevatorFloor])
+    # println("Starting Elevator: ", startingElevator)
+    # println("Unload: $unloadCounter1, $unloadCounter2")
+    # println("Load: $loadCounter1, $loadCounter2")
+    # println("Ending Floor: ", newFloors[elevatorFloor])
+    # println("Ending Elevator: ", newElevator)
   end
 
-  return isValidConfiguration
+
+  return (isValidConfiguration, newFloors, newElevator)
 end
 
-function findMinimumTrips(elevatorFloor::Int, startingFloors::Vector{Vector{Int}}, startingElevator::Vector{Int})
+function printFloors(floors::Vector{Vector{Int}}, elevatorFloor::Int)
+  for counter in 4:-1:1
+    if counter == elevatorFloor
+      line = " E "
+    else
+      line = "   "
+    end
+
+    for item in floors[counter]
+      line *= string(item)
+      line *= " "
+    end
+    println("$counter: $line")
+  end
+end
+
+function findMinimumTrips(recursionDepth::Int, elevatorFloor::Int, startingFloors::Vector{Vector{Int}}, startingElevator::Vector{Int})
 
   minimumTrips = BIG
+
+  recursionDepth += 1
+
+  # println("Recursion depth: $recursionDepth")
+
+  if recursionDepth > 15
+    # too many steps, try something else
+    recursionDepth -= 1
+    return minimumTrips
+  end
 
   # Current options include:
   #  * unload zero, one, or two things from the elevator
@@ -190,34 +274,94 @@ function findMinimumTrips(elevatorFloor::Int, startingFloors::Vector{Vector{Int}
   startingElevatorLoad = length(startingElevator)
   currentFloorLoad = length(startingFloors[elevatorFloor])
 
+  found = false
+  abort = false
+
   for unloadCounter1 in 0:2
     for unloadCounter2 in 0:2
       for loadCounter1 in 0:currentFloorLoad
         for loadCounter2 in 0:currentFloorLoad
-          isValidConfiguration = changeConfiguration(unloadCounter1, unloadCounter2, loadCounter1, loadCounter2, startingFloors, startingElevator, elevatorFloor, newFloors, newElevator)
+          (isValidConfiguration, newFloors, newElevator) = changeConfiguration(unloadCounter1, unloadCounter2, loadCounter1, loadCounter2, startingFloors, startingElevator, elevatorFloor)
 
           if isValidConfiguration
-            minTripsUp = BIG
-            minTripsDown = BIG
+            #
+            # Before moving the elevator, check to see if we have all the chips on the top floor
+            #
 
-            if elevatorFloor < 4
-              minTripsUp = findMinimumTrips(elevatorFloor + 1, newFloors, newElevator)
+            # println("Valid change")
+            # println("Starting Floor: ", startingFloors[elevatorFloor])
+            # println("Starting Elevator: ", startingElevator)
+            # println("Unload: $unloadCounter1, $unloadCounter2")
+            # println("Load: $loadCounter1, $loadCounter2")
+            # println("Ending Floor: ", newFloors[elevatorFloor])
+            # println("Ending Elevator: ", newElevator)
+            #
+            # println("")
+            #
+            # printFloors(newFloors, elevatorFloor)
+            #
+            # println("")
+
+            # found = true
+
+            # for item in ALLCHIPS
+            #   if !(item in newFloors[4])
+            #     found = false
+            #   end
+            # end
+
+            if length(newFloors[4]) == 2
+              if MH in newFloors[4]
+                if MLi in newFloors[4]
+                  found = true
+                end
+              end
             end
 
-            if elevatorFloor > 1
-              minTripsDown = findMinimumTrips(elevatorFloor - 1, newFloors, newElevator)
-            end
+            if found
+              # VICTORY
+              println("Found one!")
+              exit()
+            else
+              # No victory yet, move again
+              minTripsUp = BIG
+              minTripsDown = BIG
 
-            minimumTrips = min(minimumTrips, minTripsUp, minTripsDown)
+              println("\u1b[1H")
+              printFloors(newFloors, elevatorFloor)
+
+              if elevatorFloor < 4
+                minTripsUp = findMinimumTrips(recursionDepth, elevatorFloor + 1, newFloors, newElevator)
+              end
+
+              if elevatorFloor > 1
+                minTripsDown = findMinimumTrips(recursionDepth, elevatorFloor - 1, newFloors, newElevator)
+              end
+
+              currentTrips = min(minTripsUp, minTripsDown) + 1
+
+              if currentTrips > minimumTrips
+                abort = true
+              else
+                minimumTrips = currentTrips
+              end
+            end
           end
+          if found || abort break end
         end
+        if found || abort break end
       end
+      if found || abort break end
     end
+    if found || abort break end
   end
 
+  recursionDepth -= 1
   return minimumTrips
 end
 
-overallMinimumTrips = findMinimumTrips(elevatorFloor, floors, elevator)
+recursionDepth = 0
 
-println("The minimum number of trips is: $minimumTrips")
+overallMinimumTrips = findMinimumTrips(recursionDepth, elevatorFloor, floors, elevator)
+
+println("The minimum number of trips is: $overallMinimumTrips")
