@@ -10,10 +10,19 @@ println("")
 import Base.Collections: PriorityQueue, enqueue!, dequeue!, peek
 import Base.Order.Reverse
 
-DEBUG = true
-SALT = 10 # test case
+DEBUG = false
+
+# test case
+# SALT = 10
+# (STARTX, STARTY) = (2,2)
+# (GOALX, GOALY) = (8,5)
+# MAZE_SIZE = 10
+
+# part 1
+SALT = 1362
 (STARTX, STARTY) = (2,2)
-(GOALX, GOALY) = (8,5)
+(GOALX, GOALY) = (32,40)
+MAZE_SIZE = 50
 
 DIRS_X = [1, 0, -1, 0]
 DIRS_Y = [0, 1, 0, -1]
@@ -154,7 +163,7 @@ function findShortestPath(startx::Int, starty::Int, endx::Int, endy::Int, maze::
 
 end
 
-maze = generateMaze(10,10)
+maze = generateMaze(MAZE_SIZE, MAZE_SIZE)
 
 (maze, shortestPath) = findShortestPath(STARTX, STARTY, GOALX, GOALY, maze)
 println("The shortest path is $shortestPath.")
