@@ -70,17 +70,21 @@ function updatePriority(node, goalx, goaly)
 end
 
 function findShortestPath(startx::Int, starty::Int, endx::Int, endy::Int, maze::Array{Int})
+  #
+  # Implements the A* path-finding algorithm, based on example found at
+  # http://code.activestate.com/recipes/577519-a-star-shortest-path-algorithm/
+  #
   mazeWidth, mazeHeight = size(maze)
 
   evaluatedNodes = zeros(Float64, (mazeWidth, mazeHeight)) # "closed nodes map"
   potentialNodes = zeros(Float64, (mazeWidth, mazeHeight)) # "open nodes map"
   directions = ones(Int64, (mazeWidth, mazeHeight)) # directions to end
 
-  priorityQueues = Vector{PriorityQueue}()
-  push!(priorityQueues, PriorityQueue(Node, Float64, Reverse))
-  push!(priorityQueues, PriorityQueue(Node, Float64, Reverse))
+  priorityQueues = Vector{PriorityQueue}()                     # reverse priority queues because
+  push!(priorityQueues, PriorityQueue(Node, Float64, Reverse)) # we want to take the highest
+  push!(priorityQueues, PriorityQueue(Node, Float64, Reverse)) # priority, not the lowest
 
-  # initialize
+  # initialization
   priorityQueueIndex = 1
 
   startNode = Node(startx, starty, 0., 0.)
@@ -90,10 +94,9 @@ function findShortestPath(startx::Int, starty::Int, endx::Int, endy::Int, maze::
 
   # A* search
   while length(priorityQueues[priorityQueueIndex]) > 0
-    # get node with highest priority
-    currentNode = dequeue!(priorityQueues[priorityQueueIndex])
-    duplicateNode = deepcopy(currentNode)
-    (x, y) = (duplicateNode.x, duplicateNode.y)
+    # get next node with highest priority
+    nextNode = deepcopy(dequeue!(priorityQueues[priorityQueueIndex]))
+    (x, y) = (nextNode.x, nextNode.y)
     potentialNodes[x, y] = 0.
     evaluatedNodes[x, y] = 1.
 
@@ -115,22 +118,39 @@ function findShortestPath(startx::Int, starty::Int, endx::Int, endy::Int, maze::
 
     # where to move now?
     for direction in 1:4
+      # try each direction
       newx = x + DIRS_X[direction]
       newy = y + DIRS_Y[direction]
+
+      # eliminate disallowed places:
+      #    outside the maze
+      #    wall
+      #    already evaluated
+
       if !(newx < 1 || newx > mazeWidth || newy < 1 || newy > mazeHeight || maze[newx, newy] == 1 || evaluatedNodes[newx, newy] == 1)
         # make a new node
-        newNode = Node(newx, newy, duplicateNode.distance + 10., duplicateNode.priority)
+        newNode = Node(newx, newy, nextNode.distance + 10., nextNode.priority)
         updatePriority(newNode, endx, endy)
 
         if DEBUG println("New node at ", newx, ", ", newy, " with priority ", newNode.priority) end
 
         if potentialNodes[newx, newy] == 0.
+          # if this wasn't a potential node before, assign the potential w/ new priority
           potentialNodes[newx, newy] = newNode.priority
+
+          # put the node in the priority queue
           enqueue!(priorityQueues[priorityQueueIndex], newNode, newNode.priority)
+
+          # indicate how we got here
           directions[newx, newy] = direction
+
         elseif potentialNodes[newx, newy] > newNode.priority
+          # if we're putting a higher priority node here, swap for it
           potentialNodes[newx, newy] = newNode.priority
+
+          # how did we get here
           directions[newx, newy] = direction
+
           # swap the old node for this higher-priority node
           while !(peek(priorityQueues[priorityQueueIndex]).x == newx && peek(priorityQueues[priorityQueueIndex]).y == newy)
             tempNode = dequeue!(priorityQueues[priorityQueueIndex])
@@ -159,7 +179,7 @@ function findShortestPath(startx::Int, starty::Int, endx::Int, endy::Int, maze::
 
   # didn't find solution
 
-  return (maze, -99999)
+  return (maze, 99999)
 
 end
 
@@ -167,4 +187,43 @@ maze = generateMaze(MAZE_SIZE, MAZE_SIZE)
 
 (maze, shortestPath) = findShortestPath(STARTX, STARTY, GOALX, GOALY, maze)
 println("The shortest path is $shortestPath.")
+printMaze(maze)
+
+# part 2 is trying to find all the places we can reach within a distance
+# of 50 steps
+
+# Just brute force it.
+
+maze = generateMaze(MAZE_SIZE, MAZE_SIZE)
+
+nPaths = 0
+
+for currentx in 1:50
+  for currenty in 1:50
+    if maze[currentx, currenty] == 0
+      validMaze = deepcopy(maze)
+      (maze, shortestPath) = findShortestPath(STARTX, STARTY, currentx, currenty, maze)
+      if !(shortestPath <= 50)
+        maze = validMaze
+      else
+        nPaths += 1
+      end
+    end
+  end
+end
+
+# Now count non-zero and non-one entries
+
+nReached = 0
+for currentx in 1:50
+  for currenty in 1:50
+    if maze[currentx, currenty] > 1
+        nReached += 1
+    end
+  end
+end
+
+println("")
+println("$nReached distinct locations can be reached within 50 steps, by $nPaths paths.")
+
 printMaze(maze)
