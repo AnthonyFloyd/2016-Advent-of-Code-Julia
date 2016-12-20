@@ -8,18 +8,32 @@ println("Advent of Code")
 println("Day 14: One-Time Pad")
 println("")
 
+STRETCH = true
+
 # test
 #SALT = "abc"
 
-# part 1
+# part 1 and 2
 SALT = "qzyelonm"
+
+function getHash(key::String, stretch::Bool)
+  hash = hexdigest("md5",key)
+
+  if stretch
+    for i in 1:2016
+      hash = hexdigest("md5", hash)
+    end
+  end
+
+  return hash
+end
 
 # generate 1000 hashes first
 
 hashes = Vector{String}(1001)
 
 for counter in 1:1001
-  hashes[counter] = hexdigest("md5",SALT * string(counter))
+  hashes[counter] = getHash(SALT * string(counter), STRETCH)
 end
 
 hashCounter = 1
@@ -46,7 +60,7 @@ while nKeys < 64
     shift!(hashes)
     # put a new one on the end
     hashCounter += 1
-    push!(hashes, hexdigest("md5",SALT * string(hashCounter + 1000)))
+    push!(hashes, getHash(SALT * string(hashCounter + 1000), STRETCH))
   end
 
   if hashCounter % 1000 == 0
